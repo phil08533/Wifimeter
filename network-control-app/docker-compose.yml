@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/wifimeter.db
+      - SUBNET=${SUBNET:-192.168.1.0/24}
+      - OPENWRT_HOST=${OPENWRT_HOST:-}
+      - OPENWRT_USER=${OPENWRT_USER:-root}
+      - OPENWRT_PASSWORD=${OPENWRT_PASSWORD:-}
+    network_mode: host  # Required for ARP scanning to see LAN devices
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
