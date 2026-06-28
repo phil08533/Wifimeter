@@ -1,0 +1,32 @@
+version: "3.9"
+
+# Linux-specific compose file — enables host networking for real LAN ARP scanning.
+# Usage: sudo docker compose -f docker-compose.linux.yml up -d --build
+# (setup.sh runs this automatically)
+
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/wifimeter.db
+      - SUBNET=${SUBNET:-192.168.1.0/24}
+      - OPENWRT_HOST=${OPENWRT_HOST:-}
+      - OPENWRT_USER=${OPENWRT_USER:-root}
+      - OPENWRT_PASSWORD=${OPENWRT_PASSWORD:-}
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+    network_mode: host   # shares host network stack — required for ARP scanning
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    extra_hosts:
+      - "backend:host-gateway"   # lets nginx reach the host-networked backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
