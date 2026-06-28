@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/wifimeter.db
+      - SUBNET=${SUBNET:-192.168.1.0/24}
+      - OPENWRT_HOST=${OPENWRT_HOST:-}
+      - OPENWRT_USER=${OPENWRT_USER:-root}
+      - OPENWRT_PASSWORD=${OPENWRT_PASSWORD:-}
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+    restart: unless-stopped
+    # Note: network_mode: host is Linux-only.
+    # On Windows/Mac, ARP scanning won't reach the LAN — demo traffic mode is used instead.
+    # To enable real device scanning, run the backend natively on a Linux host or Raspberry Pi.
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
